@@ -1,0 +1,464 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0a0a0a url('https://www.transparenttextures.com/patterns/grain.png') repeat;
+  font-family: 'Orbitron', sans-serif;
+  color: #ff5722;
+  user-select: none;
+  font-size: 16px; /* base 16px */
+}
+
+#container {
+  display: flex;
+  gap: 30px;       /* 1.875em */
+  padding: 40px 20px; /* 2.5em 1.25em */
+  max-width: 1200px;    /* 75em */
+  margin: 0 auto;
+  height: 90vh;
+}
+
+/* === Clicker à gauche === */
+#clicker-section {
+  flex: 0 0 20%;
+  max-width: 20%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 20px; /* 1.25em */
+  padding: 20px;       /* 1.25em */
+  background: linear-gradient(135deg, #bf360c, #d84315);
+  box-shadow:
+    0 0 20px #ff5722,    /* 1.25em */
+    inset 0 0 10px #d84315; /* 0.625em */
+}
+
+#clicker-section h1 {
+  font-size: 32px; /* calc(2.5rem * 0.8) */
+  margin-bottom: 30px; /* 1.875em */
+  text-shadow:
+    0 0 10px #ff5722,  /* 0.625em */
+    0 0 20px #ff3d00;   /* 1.25em */
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+#fuzeHead {
+  width: 200px;       /* 12.5em */
+  height: 200px;      /* 12.5em */
+  border-radius: 30px; /* 1.875em */
+  cursor: pointer;
+  border: 3px solid #ff5722; /* 0.1875em */
+  box-shadow:
+    0 0 15px #ff5722, /* 0.9375em */
+    0 0 35px #ff3d00, /* 2.1875em */
+    0 0 50px #ff3d00;  /* 3.125em */
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  margin-bottom: 30px; /* 1.875em */
+}
+
+#fuzeHead:hover {
+  transform: scale(1.15);
+  box-shadow:
+    0 0 25px #ff6e40, /* 1.5625em */
+    0 0 50px #ff3d00,  /* 3.125em */
+    0 0 70px #ff3d00;  /* 4.375em */
+}
+
+#score {
+  font-size: 20px; /* 1.25rem */
+  color: #ffab91;
+  text-shadow:
+    0 0 5px #ffab91, /* 0.15625em */
+    0 0 15px #ff3d00; /* 0.46875em */
+  padding: 5px 15px; /* 0.3125em 0.9375em */
+  border-radius: 7.5px; /* 0.46875em */
+  background-color: rgba(255, 87, 34, 0.15);
+  box-shadow:
+    inset 0 0 4px #ff7043,  /* 0.25em */
+    0 0 5px #ff3d00;      /* 0.3125em */
+  min-width: 110px;          /* 6.875em */
+  text-align: center;
+  user-select: none;
+}
+#vps {
+  font-size: 16px; /* 1rem */
+  color: #ffab91;
+  margin-top: 8px; /* 0.5em */
+  text-shadow:
+    0 0 2px #ffab91, /* 0.125em */
+    0 0 5px var(--color-accent); /* 0.3125em */
+  background-color: rgba(255, 87, 34, 0.08);
+  padding: 4px 12px; /* 0.25em 0.75em */
+  border-radius: 7.5px; /* 0.46875em */
+  user-select: none;
+}
+
+
+/* === Milieu : améliorations === */
+
+#upgrades-section {
+  flex: 1.5;
+  background: linear-gradient(135deg, #3e2723, #5d4037);
+  border-radius: 20px; /* 1.25em */
+  padding: 20px;       /* 1.25em */
+  color: #ffc2b3;
+  box-shadow:
+    0 0 10px #bf360c; /* 0.625em */
+  display: flex;
+  flex-direction: column;
+}
+
+#upgrades-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px; /* 1.25em */
+  color: #ff7043;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: 29px; /* 1.8rem */
+  text-align: center;
+  text-shadow: 0 0 8px #ff5722; /* 0.5em */
+}
+
+#upgrades-list {
+  overflow-y: auto;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* 0.9375em */
+  padding-right: 10px; /* 0.625em */
+}
+
+/* Boutons améliorations */
+
+.upgrade {
+  background: linear-gradient(145deg, #bf360c, #d84315);
+  width: 100%;
+  border-radius: 15px; /* 0.9375em */
+  border: none;
+  padding: 16px 25px; /* 1em 1.5625em */
+  font-weight: 700;
+  font-size: 17.6px; /* 1.1rem */
+  cursor: pointer;
+  box-shadow:
+    0 0 8px #ff7043, /* 0.5em */
+    0 0 15px #ff3d00; /* 0.9375em */
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  color: #fff;
+  text-transform: uppercase;
+  display: flex; /* Ensures content fills the button */
+  flex-direction: column;
+}
+
+.upgrade:hover:not(:disabled) {
+  background: linear-gradient(145deg, #ff7043, #ff5722);
+  box-shadow:
+    0 0 12px #ff7043,  /* 0.75em */
+    0 0 20px #ff3d00;  /* 1.25em */
+}
+
+.upgrade:disabled {
+  background: #5d4037;
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #bdbdbd;
+}
+
+.upgrade .name {
+  font-size: 20.8px; /* 1.3rem */
+  margin-bottom: 6px; /* 0.375em */
+}
+
+.upgrade .desc {
+  font-weight: 400;
+  font-size: 14.4px; /* 0.9rem */
+  margin-bottom: 10px; /* 0.625em */
+  color: hsl(12, 100%, 83%);
+}
+
+.upgrade .cost {
+  font-weight: 700;
+  color: #ffc2b3;
+  text-shadow: 0 0 6px #ff3d00; /* 0.375em */
+  align-self: flex-end;
+}
+
+/* Côté droit : usines sous forme de boutons */
+
+#factories-section {
+  flex: 1.5;
+  background: linear-gradient(135deg, #3e2723, #5d4037);
+  border-radius: 20px; /* 1.25em */
+  padding: 20px;       /* 1.25em */
+  color: #ffc2b3;
+  box-shadow:
+    0 0 10px #bf360c; /* 0.625em */
+  overflow-y: auto;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#factories-section h2 {
+  margin-top: 0;
+  margin-bottom: 20px; /* 1.25em */
+  color: #ff7043;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  font-size: 29px; /* 1.8rem */
+  text-align: center;
+  text-shadow: 0 0 8px #ff5722; /* 0.5em */
+}
+
+#factories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* 0.9375em */
+  overflow-y: auto;
+  flex-grow: 1;
+  padding-right: 10px; /* 0.625em */
+}
+
+.factory {
+  background: linear-gradient(145deg, #bf360c, #d84315);
+  width: 100%;
+  border-radius: 15px; /* 0.9375em */
+  border: none;
+  padding: 16px 20px; /* 1em 1.25em */
+  font-weight: 700;
+  font-size: 17.6px; /* 1.1rem */
+  cursor: pointer;
+  box-shadow:
+    0 0 8px #ff7043, /* 0.5em */
+    0 0 15px #ff3d00; /* 0.9375em */
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  color: #fff;
+  text-transform: uppercase;
+  display: flex; /* Ensures content fills the button */
+  flex-direction: column;
+}
+
+.factory:hover:not(:disabled) {
+  background: linear-gradient(145deg, #ff7043, #ff5722);
+  box-shadow:
+    0 0 12px #ff7043,  /* 0.75em */
+    0 0 20px #ff3d00;  /* 1.25em */
+}
+
+.factory:disabled {
+  background: #5d4037;
+  cursor: not-allowed;
+  box-shadow: none;
+  color: #bdbdbd;
+}
+
+.factory .name {
+  font-size: 20.8px; /* 1.3rem */
+  margin-bottom: 6px; /* 0.375em */
+}
+
+.factory .desc {
+  font-weight: 400;
+  font-size: 14.4px; /* 0.9rem */
+  margin-bottom: 10px; /* 0.625em */
+  color: #ffbbaa;
+}
+
+.factory .cost {
+  font-weight: 700;
+  color: #ffc2b3;
+  text-shadow: 0 0 6px #ff3d00; /* 0.375em */
+}
+
+.factory .production {
+  font-weight: 600;
+  color: #ffab91;
+  margin-top: 4px; /* 0.25em */
+}
+
+.factory .count {
+  font-weight: 700;
+  color: #ffccbc;
+  margin-top: 8px;  /* 0.5em */
+  font-size: 16px;    /* 1rem */
+}
+
+/* Texte +X animé au clic avec couleurs chaudes */
+
+.click-feedback {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 700;
+  color: #ffd180; /* jaune clair */
+  text-shadow:
+    0 0 8px #ffcc80,
+    0 0 16px #ffb74d;
+  font-size: 27.2px; /* 1.7rem */
+  user-select: none;
+  animation: floatUpFade 1s ease-out forwards;
+  z-index: 10;
+}
+
+@keyframes floatUpFade {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(1.2); /* -3.75em */
+  }
+}
+
+/* Effet "appui" sur l'image au clic */
+
+#fuzeHead {
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  user-select: none;
+  filter: drop-shadow(0 0 5px #ff7043); /* 0.3125em */
+}
+
+#fuzeHead:active {
+  transform: scale(0.92);
+  filter: drop-shadow(0 0 12px #ff3d00); /* 0.75em */
+  box-shadow:
+    inset 0 0 10px #d84315, /* 0.625em */
+    0 0 18px #ff5722;        /* 1.125em */
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+#tutorial {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(10, 10, 10, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.tutorial-box {
+  background: linear-gradient(135deg, #3e2723, #5d4037);
+  border-radius: 20px; /* 1.25em */
+  padding: 32px; /* 2em */
+  max-width: 600px;
+  text-align: center;
+  color: #ffab91;
+  box-shadow: 0 0 16px #ff5722; /* 1em */
+}
+
+.tutorial-text {
+  font-size: 19.2px; /* 1.2rem */
+  margin-bottom: 24px; /* 1.5em */
+  line-height: 1.6;
+}
+
+#next-btn {
+  background: #ff5722;
+  color: white;
+  border: none;
+  padding: 12.8px 25.6px; /* 0.8em 1.6em */
+  border-radius: 10px; /* 0.625em */
+  font-size: 16px; /* 1rem */
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#next-btn:hover {
+  background: #e64a19;
+}
+.random-event-popup {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fceabb;
+  border: 2px solid #f89d13;
+  color: #333;
+  padding: 10px 20px;
+  font-weight: bold;
+  font-family: 'Arial', sans-serif;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+  animation: fadeinout 5s;
+}
+
+@keyframes fadeinout {
+  0% { opacity: 0; top: 0; }
+  10% { opacity: 1; top: 20px; }
+  90% { opacity: 1; top: 20px; }
+  100% { opacity: 0; top: 0; }
+}
+
+/* Animation d'apparition */
+@keyframes pop-in {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+/* Style pour le conteneur des Didiers */
+#didier-container {
+    position: absolute; /* Positionne les didiers par rapport à un parent positionné */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Permet de cliquer à travers le conteneur si besoin */
+    overflow: hidden; /* Pour éviter que les didiers ne dépassent si ils sont animés en dehors */
+    z-index: 5; /* Assurez-vous qu'ils sont au-dessus ou en dessous d'autres éléments selon votre design */
+}
+
+/* Style pour chaque Didier individuel */
+.didier-clicker {
+    position: absolute;
+    width: 50px; /* Taille de votre image de Didier */
+    height: 50px; /* Ajustez si votre image est rectangulaire */
+    background-image: url('assets/images/didier.png'); /* Chemin vers votre image de Didier */
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: didierClick 0.5s infinite alternate; /* Animation de "clic" */
+    transform: translateY(0); /* Position de base */
+    opacity: 1; /* Visible */
+    /* Ces propriétés seront définies par JS pour un positionnement aléatoire */
+    top: 50%; /* Exemple de positionnement initial */
+    left: 50%; /* Exemple de positionnement initial */
+}
+
+/* Animation de clic pour Didier (peut être un simple mouvement de haut en bas) */
+@keyframes didierClick {
+    from {
+        transform: translateY(0px) scale(1);
+    }
+    to {
+        transform: translateY(-10px) scale(1.05); /* Petite élévation et grossissement */
+    }
+}
+
+/* Une animation de disparition optionnelle */
+@keyframes fadeOutAndUp {
+    from {
+        opacity: 1;
+        transform: translateY(0px) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+    }
+}

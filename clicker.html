@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fuze View Clicker </title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="fuze.png">
+</head>
+<body>
+  <div id="tutorial">
+  <div class="tutorial-box">
+    <div id="tutorial-step" class="tutorial-text">
+      <!-- Le texte changera dynamiquement -->
+    </div>
+    <button id="next-btn">Suivant</button>
+  </div>
+</div>
+  <div id="container">
+    <!-- Côté gauche : clicker -->
+    <section id="clicker-section">
+      <h1>Fuze Clicker</h1>
+      <img id="fuzeHead" src="fuze.png" alt="Fuze" />
+      <div id="score">0 vues</div>
+      <div id="vps">Vues/s : 0</div>
+
+    </section>
+
+    <!-- Milieu : améliorations -->
+    <section id="upgrades-section">
+      <h2>Améliorations</h2>
+      <div id="upgrades-list">
+        <!-- Les boutons améliorations seront injectés ici -->
+      </div>
+    </section>
+
+    <!-- Côté droit : usines -->
+    <section id="factories-section">
+      <h2>Usines</h2>
+      <div id="factories-list">
+        <!-- Les boutons usines injectés ici -->
+      </div>
+    </section>
+  </div>
+
+  <audio id="popSound" src="pop.mp3" preload="auto"></audio>
+
+  <script src="game.js">
+  <button onclick="resetGame()">Réinitialiser la partie</button>
+  </script>
+</body>
+</html>
