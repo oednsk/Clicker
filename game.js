@@ -1,4 +1,4 @@
-// --- Variables Globales ---
+/ --- Variables Globales ---
 // Ces variables stockent l'état actuel de votre jeu.
 let score = 0; // Le nombre total de vues accumulées par le joueur
 let baseViewsPerClick = 1; // Le nombre de vues de base obtenues par un simple clic
@@ -8,6 +8,7 @@ let globalVPSBonus = 0; // Bonus global en pourcentage appliqué à toutes les v
 let viewsPerSecond = 0; // Le nombre total de vues produites automatiquement par seconde
 let prodPaused = false; // Drapeau pour mettre en pause temporairement toute la production automatique (pour les événements aléatoires)
 let tempGlobalVPSBonus = 0; // Bonus temporaire global en pourcentage appliqué aux vues par seconde (pour les événements ou boosts)
+let currentActiveEventDetails = null; // Pour suivre l'événement temporaire actif et son timeout
 
 // --- NOUVELLES Variables pour l'animation de Didier ---
 let didierPool = []; // Tableau pour stocker les éléments Didier actifs
@@ -28,7 +29,6 @@ const COST_MULTIPLIER = 1.5; // Chaque nouvel achat coûte 15% plus cher que le 
 function calculateNewCost(initialCost, count) {
     return Math.floor(initialCost * Math.pow(COST_MULTIPLIER, count));
 }
-
 // --- Données du Jeu : Usines et Améliorations ---
 
 // Tableau des usines : Chaque objet représente une source de production automatique de vues.
@@ -70,7 +70,12 @@ const popSound = document.getElementById('popSound'); // Élément audio pour le
 if (popSound) popSound.volume = 0.2; // Ajuste le volume du son si l'élément existe
 
 // --- NOUVEAU : Conteneur pour les Didiers ---
-const didierContainer = document.getElementById('didier-container');
+const didierContainer = document.getElementById('didier-container'); // Assurez-vous que cet ID existe dans votre HTML si vous l'utilisez
+
+// --- NOUVEAU : Éléments pour la notification d'événements ---
+const eventNotificationDisplay = document.getElementById('event-notification');
+const noEventMessage = document.getElementById('no-event-message');
+
 
 // --- Fonctions de Mise à Update de l'UI (Interface Utilisateur) ---
 
@@ -92,15 +97,35 @@ function multiplyFactoryProduction(id, multiplier) {
 // Active un bonus temporaire à la production automatique.
 function activateTemporaryBoost(multiplier, duration) {
     tempGlobalVPSBonus = (multiplier - 1);
-    const boostMessage = document.createElement('div');
-    boostMessage.className = 'boost-message';
-    boostMessage.textContent = `BOOST ACTIF : Production x${multiplier} pendant ${duration} secondes !`;
-    document.body.appendChild(boostMessage);
+
+    // Masque le message "Aucun événement en cours..."
+    if (noEventMessage) {
+        noEventMessage.style.display = 'none';
+    }
+
+    // Affiche le message de boost directement dans eventNotificationDisplay
+    if (eventNotificationDisplay) {
+        eventNotificationDisplay.innerHTML = `<span class="event-message-content">📣 BOOST ACTIF : Production x${multiplier} pendant ${duration} secondes !</span>`;
+        eventNotificationDisplay.classList.add('flashing'); // Ajoute l'effet de clignotement
+        eventNotificationDisplay.classList.remove('fade-out'); // S'assure que l'animation de sortie est retirée
+    }
 
     setTimeout(() => {
         tempGlobalVPSBonus = 0;
-        boostMessage.remove();
-        alert("Le boost temporaire est terminé !");
+        if (eventNotificationDisplay) {
+            // Affiche le message de fin de boost, sans clignotement
+            eventNotificationDisplay.innerHTML = `<span class="event-message-content">⏳ Le boost temporaire est terminé !</span>`;
+            eventNotificationDisplay.classList.remove('flashing'); // Retire l'effet de clignotement
+            eventNotificationDisplay.classList.add('fade-out'); // Ajoute l'animation de sortie
+
+            setTimeout(() => {
+                eventNotificationDisplay.innerHTML = ''; // Vide le contenu après l'animation
+                if (noEventMessage) {
+                    noEventMessage.style.display = 'block'; // Réaffiche le message "Aucun événement en cours..."
+                }
+                eventNotificationDisplay.classList.remove('fade-out'); // Retire la classe de sortie
+            }, 500); // Correspond à la durée de l'animation fadeOut
+        }
         updateVPSDisplay();
     }, duration * 1000);
 
@@ -229,7 +254,6 @@ if (factoriesList) {
 if (fuzeHead) {
     fuzeHead.addEventListener('click', () => {
         score += getViewsPerClick();
-        // score = Math.round(score); // L'arrondi est maintenant géré dans updateScore pour l'affichage
         updateScore();
         if (popSound) {
             popSound.currentTime = 0;
@@ -289,20 +313,19 @@ function animateDidiers(currentProductionVPS) {
     while (didierPool.length > numDidiersDesired && didierPool.length > 0) {
         const didierToRemove = didierPool.shift(); // Supprime le plus ancien Didier du tableau
         // Applique une animation de disparition avant de le supprimer du DOM
-        didierToRemove.style.animation = 'fadeOutAndUp 0.5s forwards';
+        didierToRemove.style.animation = 'fadeOutAndUp 0.5s forwards'; // Assurez-vous que 'fadeOutAndUp' est défini dans votre CSS
         setTimeout(() => didierToRemove.remove(), 500);
     }
 
     // Ajoute de nouveaux Didiers si nécessaire
     while (didierPool.length < numDidiersDesired) {
         const didier = document.createElement('div');
-        didier.className = 'didier-clicker';
+        didier.className = 'didier-clicker'; // Assurez-vous que '.didier-clicker' est défini dans votre CSS
 
         // Positionne Didier aléatoirement autour de la tête de Fuze
         const fuzeRect = fuzeHead.getBoundingClientRect();
         const containerRect = didierContainer.getBoundingClientRect();
 
-        // Calcule la position relative à didierContainer
         // On prend le centre de fuzeHead et on ajoute/retire un offset aléatoire
         const x = fuzeRect.left - containerRect.left + fuzeRect.width / 2 + (Math.random() - 0.5) * 120; // ±60px autour du centre
         const y = fuzeRect.top - containerRect.top + fuzeRect.height / 2 + (Math.random() - 0.5) * 120; // ±60px autour du centre
@@ -319,38 +342,167 @@ function animateDidiers(currentProductionVPS) {
     didierPool.forEach(didier => {
         didier.style.animation = 'none'; // Stoppe l'animation
         void didier.offsetWidth; // Force un reflow pour permettre la relance de l'animation
-        didier.style.animation = 'didierClick 0.5s infinite alternate'; // Relance l'animation
+        didier.style.animation = 'didierClick 0.5s infinite alternate'; // Relance l'animation (assurez-vous que 'didierClick' est défini)
     });
+}
+
+
+// --- Fonctions de Sauvegarde et Chargement ---
+let currentStep = 0; // Definition for currentStep for save/load
+
+function saveGame() {
+    const gameData = {
+        score: score,
+        baseViewsPerClick: baseViewsPerClick,
+        clickMultiplier: clickMultiplier,
+        clickBonus: clickBonus,
+        globalVPSBonus: globalVPSBonus,
+        viewsPerSecond: viewsPerSecond, // Bien que calculé, le stocker aide à l'affichage immédiat au chargement
+        prodPaused: prodPaused,
+        tempGlobalVPSBonus: tempGlobalVPSBonus,
+        factories: factories.map(f => ({
+            id: f.id,
+            cost: f.cost,
+            production: f.production,
+            count: f.count
+        })),
+        upgrades: upgrades.map(u => ({
+            id: u.id,
+            cost: u.cost,
+            bought: u.bought
+        })),
+        currentStep: currentStep // Sauvegarde l'étape du tutoriel
+    };
+    localStorage.setItem('fuzeViewClickerSave', JSON.stringify(gameData));
+    console.log("Jeu sauvegardé !");
+}
+
+const tutorialDiv = document.getElementById("tutorial"); // Definition for tutorialDiv for loadGame
+const tutorialSteps = []; // Definition for tutorialSteps for loadGame, assuming it's defined elsewhere or should be empty
+
+function loadGame() {
+    const savedGame = localStorage.getItem('fuzeViewClickerSave');
+    if (savedGame) {
+        const gameData = JSON.parse(savedGame);
+
+        score = gameData.score;
+        baseViewsPerClick = gameData.baseViewsPerClick;
+        clickMultiplier = gameData.clickMultiplier;
+        clickBonus = gameData.clickBonus;
+        globalVPSBonus = gameData.globalVPSBonus;
+        viewsPerSecond = gameData.viewsPerSecond;
+        prodPaused = gameData.prodPaused;
+        tempGlobalVPSBonus = gameData.tempGlobalVPSBonus;
+
+        gameData.factories.forEach(savedFactory => {
+            const factory = factories.find(f => f.id === savedFactory.id);
+            if (factory) {
+                factory.cost = savedFactory.cost;
+                factory.production = savedFactory.production;
+                factory.count = savedFactory.count;
+            }
+        });
+
+        gameData.upgrades.forEach(savedUpgrade => {
+            const upgrade = upgrades.find(u => u.id === savedUpgrade.id);
+            if (upgrade) {
+                upgrade.cost = savedUpgrade.cost;
+                upgrade.bought = savedUpgrade.bought;
+                // Réappliquer les effets des améliorations qui modifient les statistiques de base
+                // C'est crucial pour les effets qui ne sont pas liés à la production des usines
+                // L'ajustement (savedUpgrade.bought - upgrade.bought) est une précaution si les variables
+                // sont déjà initialisées à leur état de base avant le chargement.
+                if (upgrade.id === 'micro') clickBonus += (savedUpgrade.bought - upgrade.bought);
+                if (upgrade.id === 'miniature') clickBonus += (savedUpgrade.bought - upgrade.bought) * 2;
+                if (upgrade.id === 'sponsor') clickBonus += (savedUpgrade.bought - upgrade.bought) * 5;
+                if (upgrade.id === 'videosVirales') clickMultiplier *= Math.pow(2, (savedUpgrade.bought - upgrade.bought));
+                if (upgrade.id === 'algorithmeUltime') clickMultiplier *= Math.pow(3, (savedUpgrade.bought - upgrade.bought));
+
+                // Réappliquer les bonus en pourcentage globaux
+                if (upgrade.id === 'serveurs') globalVPSBonus += (savedUpgrade.bought - upgrade.bought) * 0.10;
+                if (upgrade.id === 'marketingGlobal') globalVPSBonus += (savedUpgrade.bought - upgrade.bought) * 0.25;
+
+                // Réappliquer les multiplicateurs spécifiques aux usines, en s'assurant qu'ils ne s'appliquent qu'une seule fois par chargement
+                if (upgrade.id === 'seo' && savedUpgrade.bought > upgrade.bought) {
+                    multiplyFactoryProduction('didierFactory', Math.pow(2, (savedUpgrade.bought - upgrade.bought)));
+                }
+                if (upgrade.id === 'montageDynamique' && savedUpgrade.bought > upgrade.bought) {
+                    multiplyFactoryProduction('studio', Math.pow(2, (savedUpgrade.bought - upgrade.bought)));
+                }
+                if (upgrade.id === 'partenariatYT' && savedUpgrade.bought > upgrade.bought) {
+                    multiplyFactoryProduction('chaineSecondaire', Math.pow(2, (savedUpgrade.bought - upgrade.bought)));
+                }
+                if (upgrade.id === 'reseauInfluenceurs' && savedUpgrade.bought > upgrade.bought) {
+                    multiplyFactoryProduction('reseauChaines', Math.pow(2, (savedUpgrade.bought - upgrade.bought)));
+                }
+
+                // Pour les boosts temporaires (comme "evenementLive"), les réactiver nécessiterait
+                // de sauvegarder leur état (temps restant, type de boost) ce qui est plus complexe.
+                // Pour l'instant, ils ne sont pas réactivés au chargement.
+            }
+        });
+
+        currentStep = gameData.currentStep; // Charge l'étape du tutoriel
+        if (tutorialDiv && currentStep < tutorialSteps.length) {
+            tutorialDiv.style.display = "flex";
+            showStep(currentStep);
+        } else if (tutorialDiv) {
+            tutorialDiv.style.display = "none";
+        }
+
+        updateScore();
+        updateVPSDisplay();
+        renderAll();
+        console.log("Jeu chargé !");
+    } else {
+        console.log("Aucune sauvegarde trouvée.");
+        // Si aucune sauvegarde, s'assurer que le tutoriel démarre
+        if (tutorialDiv) {
+            tutorialDiv.style.display = "flex";
+            currentStep = 0;
+            showStep(currentStep);
+        }
+    }
 }
 
 
 // --- Initialisation du Jeu ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    loadGame(); // Tente de charger le jeu en premier
     renderAll();
     updateScore();
     updateVPSDisplay();
-    showStep(currentStep);
+    // showStep(currentStep); // Ceci est maintenant appelé par loadGame
+
+    // Au démarrage, s'assurer que le message "Aucun événement" est visible
+    if (noEventMessage) {
+        noEventMessage.style.display = 'block';
+        eventNotificationDisplay.innerHTML = ''; // Assure que le conteneur principal est vide sauf pour le message
+        eventNotificationDisplay.appendChild(noEventMessage); // Replace le message dans le conteneur
+    }
+
+    // Configure la sauvegarde automatique toutes les minutes (60 000 millisecondes)
+    setInterval(saveGame, 60000);
 });
 
 // --- Système de Tutoriel ---
 
-const tutorialSteps = [
-    "👋 Bienvenue sur <strong>Fuze View Clicker </strong> !<br>Tu vas incarner Fuze III, un YouTubeur en devenir.",
-    "🖱️ Clique sur ta tête pour gagner des <strong>vues</strong>. Chaque clic te rapporte des vues .",
-    "🧠 Utilise ces vues pour acheter des <strong>améliorations</strong> qui boostent tes vues par clic.",
-    "🏭 Investis ensuite dans des <strong>usines</strong> (monteurs, IA, bots...) qui produisent des vues automatiquement.",
-    "🎯 Ton objectif : devenir le plus grand créateur de contenu du monde en explosant ton compteur de vues !",
-    "🚀 Bonne chance, créateur. Clique sur <strong>Commencer</strong> pour te lancer !"
-];
+// const tutorialSteps = [ // This is re-declared, ensure one definition
+//     "👋 Bienvenue sur **Fuze View Clicker** !<br>Tu vas incarner Fuze III, un YouTubeur en devenir.",
+//     "🖱️ Clique sur ta tête pour gagner des **vues**. Chaque clic te rapporte des vues .",
+//     "🧠 Utilise ces vues pour acheter des **améliorations** qui boostent tes vues par clic.",
+//     "🏭 Investis ensuite dans des **usines** (monteurs, IA, bots...) qui produisent des vues automatiquement.",
+//     "🎯 Ton objectif : devenir le plus grand créateur de contenu du monde en explosant ton compteur de vues !",
+//     "🚀 Bonne chance, créateur. Clique sur **Commencer** pour te lancer !"
+// ];
 
-let currentStep = 0;
-const tutorialDiv = document.getElementById("tutorial");
+// let currentStep = 0; // Re-declared
 const stepElement = document.getElementById("tutorial-step");
 const nextBtn = document.getElementById("next-btn");
 
 function showStep(index) {
-    if (stepElement) {
+    if (stepElement && tutorialSteps[index]) { // Added check for tutorialSteps[index]
         stepElement.innerHTML = tutorialSteps[index];
     }
     if (nextBtn) {
@@ -419,27 +571,207 @@ const randomEvents = [
     { name: "Fuze en Pixel Art", description: "TOUT x7. (TRÈS RARE)", type: "temporary", effect: () => { clickMultiplier *= 7; tempGlobalVPSBonus += 6; }, revert: () => { clickMultiplier /= 7; tempGlobalVPSBonus -= 6; }, duration: 60 }
 ];
 
-function triggerRandomEvent() {
-    const event = randomEvents[Math.floor(Math.random() * randomEvents.length)];
-    alert(`📣 Événement : ${event.name}\n${event.description}`);
+// Gestion des timeouts pour les événements pour éviter les chevauchements
 
-    event.effect();
+function triggerRandomEvent() {
+    // 1. Revert any existing active temporary event
+    if (currentActiveEventDetails && currentActiveEventDetails.timeoutId) {
+        clearTimeout(currentActiveEventDetails.timeoutId);
+        if (currentActiveEventDetails.event && typeof currentActiveEventDetails.event.revert === 'function') {
+            currentActiveEventDetails.event.revert();
+            // console.log("Reverted previous event:", currentActiveEventDetails.event.name); // Optional: for debugging
+        }
+    }
+    currentActiveEventDetails = null; // Reset before processing the new event
+
+    // Ensure randomEvents is defined and has elements before trying to access it
+    if (!randomEvents || randomEvents.length === 0) {
+        console.log("randomEvents array is empty or undefined. Cannot trigger event.");
+        if (noEventMessage && eventNotificationDisplay && eventNotificationDisplay.innerHTML === '') {
+            noEventMessage.style.display = 'block';
+        }
+        return; 
+    }
+    
+    const event = randomEvents[Math.floor(Math.random() * randomEvents.length)];
+
+    // Check if an event was actually selected (e.g. if randomEvents was filtered to empty)
+    if (!event) {
+        console.log("No event selected from randomEvents. It might be unexpectedly empty or filtered.");
+        if (noEventMessage && eventNotificationDisplay && eventNotificationDisplay.innerHTML === '') {
+            noEventMessage.style.display = 'block';
+        }
+        return; 
+    }
+
+    // 2. Display notification for the new event
+    if (noEventMessage) {
+        noEventMessage.style.display = 'none';
+    }
+    if (eventNotificationDisplay) {
+        eventNotificationDisplay.innerHTML = ''; // Clear previous message
+        eventNotificationDisplay.innerHTML = `<span class="event-message-content">📣 Événement : **${event.name}**<br>${event.description}</span>`;
+        eventNotificationDisplay.classList.add('flashing');
+        eventNotificationDisplay.classList.remove('fade-out');
+    }
+
+    if (typeof event.effect === 'function') {
+        event.effect(); // Apply the new event's effect
+    } else {
+        console.error("Event effect is not a function for event:", event.name);
+        // Optionally, handle this error more gracefully in the UI
+    }
+
 
     if (event.type === "temporary") {
-        setTimeout(() => {
-            event.revert();
-            alert(`⏳ Fin de l'événement : ${event.name}`);
+        const timeoutId = setTimeout(() => {
+            // 3. Handle temporary event completion
+            if (currentActiveEventDetails && currentActiveEventDetails.event.name === event.name) {
+                if (typeof event.revert === 'function') {
+                    event.revert();
+                } else {
+                    console.error("Event revert is not a function for event:", event.name);
+                }
+                
+                if (eventNotificationDisplay) {
+                    eventNotificationDisplay.innerHTML = `<span class="event-message-content">⏳ Fin de l'événement : **${event.name}**</span>`;
+                    eventNotificationDisplay.classList.remove('flashing');
+                    eventNotificationDisplay.classList.add('fade-out');
+
+                    setTimeout(() => {
+                        if (eventNotificationDisplay) {
+                           eventNotificationDisplay.innerHTML = ''; 
+                           if (noEventMessage) {
+                               noEventMessage.style.display = 'block'; 
+                           }
+                           eventNotificationDisplay.classList.remove('fade-out');
+                        }
+                    }, 500); 
+                }
+                currentActiveEventDetails = null; 
+            }
             updateButtonStates();
             updateVPSDisplay();
             renderAll();
         }, event.duration * 1000);
+        
+        currentActiveEventDetails = { event: event, timeoutId: timeoutId };
+    } else { // Immediate event
+        if (eventNotificationDisplay) {
+            setTimeout(() => {
+                if (eventNotificationDisplay) { 
+                    eventNotificationDisplay.classList.add('fade-out');
+                    setTimeout(() => {
+                        if (eventNotificationDisplay) { 
+                            eventNotificationDisplay.innerHTML = ''; 
+                            if (noEventMessage) {
+                                noEventMessage.style.display = 'block';
+                            }
+                            eventNotificationDisplay.classList.remove('flashing', 'fade-out');
+                        }
+                    }, 500); 
+                }
+            }, 3000); 
+        }
     }
     updateButtonStates();
     renderAll();
     updateVPSDisplay();
 }
 
+// Intervalle pour déclencher le prochain événement aléatoire
 setInterval(() => {
-    const delay = 90000 + Math.random() * 90000;
-    setTimeout(triggerRandomEvent, delay);
-}, 90000);
+    // Un événement ne se déclenchera que si aucun événement temporaire n'est en cours.
+    // Cela empêche que les événements s'empilent ou se coupent si un événement temporaire est actif.
+    if (currentActiveEventDetails === null) { 
+        const delay = 90000 + Math.random() * 90000; // Délai entre 90 et 180 secondes
+        setTimeout(triggerRandomEvent, delay);
+        // console.log(`Next random event scheduled in ${delay / 1000}s`); // Optional: for debugging
+    } else {
+        // console.log("A temporary event is currently active. New event scheduling paused."); // Optional: for debugging
+    }
+}, 90000); // Vérifie toutes les 90 secondes si un nouvel événement peut être déclenché
+
+// Fonction de réinitialisation du jeu (à compléter si besoin)
+function resetGame() {
+    // Logique de réinitialisation du jeu ici
+    score = 0;
+    baseViewsPerClick = 1;
+    clickMultiplier = 1;
+    clickBonus = 0;
+    globalVPSBonus = 0;
+    viewsPerSecond = 0;
+    prodPaused = false;
+    tempGlobalVPSBonus = 0;
+
+    factories.forEach(factory => {
+        factory.count = 0;
+        factory.cost = factory.initialCost;
+        // Pour la production, vous devrez peut-être stocker une propriété `initialProduction`
+        // sur chaque objet usine si leur production de base peut être modifiée
+        // par des améliorations. Sinon, elle ne se réinitialisera pas correctement.
+        // Par exemple :
+        // factory.production = factory.initialProduction;
+    });
+
+    upgrades.forEach(upg => {
+        upg.bought = 0;
+        upg.cost = upg.initialCost;
+        // Réinitialiser les effets d'améliorations spécifiques
+        // C'est une réinitialisation simplifiée. Une réinitialisation plus robuste suivrait tous les effets appliqués.
+        if (upg.id === 'micro') clickBonus = 0; // En supposant que clickBonus initial est 0
+        if (upg.id === 'miniature') clickBonus = 0;
+        if (upg.id === 'sponsor') clickBonus = 0;
+        if (upg.id === 'videosVirales') clickMultiplier = 1; // En supposant que clickMultiplier initial est 1
+        if (upg.id === 'algorithmeUltime') clickMultiplier = 1;
+        if (upg.id === 'serveurs') globalVPSBonus = 0; // En supposant que globalVPSBonus initial est 0
+        if (upg.id === 'marketingGlobal') globalVPSBonus = 0;
+
+        // Réinitialiser les multiplicateurs spécifiques aux usines en remettant leur production aux valeurs initiales
+        // Cela nécessite de stocker `initialProduction` pour chaque usine.
+        const factoryAffectedByUpgrade = factories.find(f =>
+            (upg.id === 'seo' && f.id === 'didierFactory') ||
+            (upg.id === 'montageDynamique' && f.id === 'studio') ||
+            (upg.id === 'partenariatYT' && f.id === 'chaineSecondaire') ||
+            (upg.id === 'reseauInfluenceurs' && f.id === 'reseauChaines')
+        );
+        if (factoryAffectedByUpgrade) {
+            // Ceci est un marqueur de position. Vous devrez réinitialiser correctement leur production.
+            // factoryAffectedByUpgrade.production = factoryAffectedByUpgrade.initialProduction;
+        }
+    });
+
+    updateScore();
+    updateVPSDisplay();
+    renderAll();
+
+    // Réafficher le tutoriel ou un message de démarrage
+    if (tutorialDiv) {
+        tutorialDiv.style.display = "flex"; // Ou 'block' selon votre CSS
+        currentStep = 0;
+        showStep(currentStep);
+    }
+
+    // S'assurer que la notification d'événement revient à l'état par défaut
+    if (eventNotificationDisplay) {
+        eventNotificationDisplay.innerHTML = ''; // Vide le contenu de l'événement
+        eventNotificationDisplay.classList.remove('flashing', 'fade-out');
+        if (noEventMessage) {
+            noEventMessage.style.display = 'block'; // Réaffiche le message par défaut
+            eventNotificationDisplay.appendChild(noEventMessage); // Replace le message dans le conteneur
+        }
+    }
+    // Effacer tout événement en cours
+    if (currentActiveEventDetails && currentActiveEventDetails.timeoutId) {
+        clearTimeout(currentActiveEventDetails.timeoutId);
+        if (currentActiveEventDetails.event && 
+            currentActiveEventDetails.event.type === "temporary" && 
+            typeof currentActiveEventDetails.event.revert === 'function') {
+            // console.log("Reverting active event during game reset:", currentActiveEventDetails.event.name); // Optional for debugging
+            currentActiveEventDetails.event.revert();
+        }
+    }
+    currentActiveEventDetails = null; // Ensure it's null after reset
+    localStorage.removeItem('fuzeViewClickerSave'); // Efface la sauvegarde lors de la réinitialisation
+    console.log("Jeu réinitialisé et sauvegarde effacée.");
+}
